@@ -12,7 +12,17 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-var s = Snap('#main');
-var rect = s.rect(10,10,10,10);
-var circle = s.circle(10,10,10);
-circle.drag();
+$(document).ready(new Main().main);
+
+function Main() {
+	this.main = function() {
+		var svgId = '#main';
+		var s = Snap(svgId);
+		var height = s.node.offsetHeight;
+		var width = s.node.offsetWidth;
+		var rect = s.rect(0,0,width,height);		
+		var circle = s.circle(10,10,10);
+		circle.attr({fill: 'red'});
+		circle.drag();
+	}
+}
