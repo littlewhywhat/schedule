@@ -60,7 +60,12 @@ function Month() {
 	this.draw = function(x, y, width, height, color, text) {
 		var rect = snap.rect(x, y, width, height);
 		rect.attr({fill: color});
-		var text = snap.text(x + width/2, height/2, text);
+		var text = snap.text(x + width/5, height/2, text.toUpperCase());
+		text.attr({
+			fontSize: 40,
+			fontFamily: 'Comic Sans MS',
+			fill: 'white' 
+		});
 	}
 }
 
