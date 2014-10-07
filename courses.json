@@ -2,21 +2,29 @@
 	{
 		"id":3,
 		"month":"nov2",
-		"color":"#f6b26b"
+		"color":"#f6b26b",
+		"name":"Machine",
+		"week":"week1"
 	},
 	{
 		"id":2,
 		"month":"jan1",
-		"color":"#ffd966"
+		"color":"#ffd966",
+		"name":"Machine",
+		"week":"week1"
 	},
 	{
 		"id":0,
 		"month":"nov1",
-		"color":"#a4c2f4"
+		"color":"#a4c2f4",
+		"name":"Machine",
+		"week":"week1"
 	},
 	{
 		"id":1,
 		"month":"oct1",
-		"color":"#f4cccc"
+		"color":"#f4cccc",
+		"name":"Machine",
+		"week":"week1"
 	}
 ]

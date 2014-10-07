@@ -149,6 +149,8 @@ function Course(schedule, json) {
 	this.json = json;
 	var instance = this;
 	var snapElement;
+	var snapText;
+	var snapWeekText;
 	var month = schedule.months[json.month];
 	var drawer = drawer;
 	var drag = function() {
@@ -162,11 +164,19 @@ function Course(schedule, json) {
 			snapElement.attr({
 				transform: matrix.toTransformString()
 			});
+			snapText.attr({
+				transform: matrix.toTransformString()
+			});
+			snapWeekText.attr({
+				transform: matrix.toTransformString()
+			});
 		}, function() {
 			localMatrix = snapElement.transform().localMatrix;
 		}, function(event) {
 			month.remove(instance);
 			snapElement.remove();
+			snapText.remove();
+			snapWeekText.remove();
 			var newMonth = schedule.find(event.x, event.y);
 			drawer.draw(instance, newMonth.add(instance));
 			month = newMonth;
@@ -183,6 +193,20 @@ function Course(schedule, json) {
 			fill: json.color,
 			stroke: '#000',
 		});
+		snapText = snap.text(x - instance.COURSERADIUS + 1, y , json.name);
+		snapText.attr({
+			fontSize: 25,
+			fontFamily: 'Comic Sans MS',
+			fill: 'white' 
+		});
+		snapWeekText = snap.text(x - instance.COURSERADIUS + 15, y + 25, json.week);
+		snapWeekText.attr({
+			fontSize: 25,
+			fontFamily: 'Comic Sans MS',
+			fill: 'white' 
+		});
+
+		snapElement.after(snapText);
 		drag();
 	}
 
