@@ -43,14 +43,15 @@ function Drawer(svgId) {
 
 function Schedule() {
 	var MONTHNAMES = ['oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may'];
-	var months = {};
+	var instance = this;
+	this.months = {};
 	function initMonths() {
 		MONTHNAMES.forEach(function(name) {
-			months[name] = new Month(name);
+			instance.months[name] = new Month(name);
 		});
 	}
 	this.add = function(course) {
-		return months[course.json.month].add(course);
+		return instance.months[course.json.month].add(course);
 	}
 
 	this.draw = function(drawer, snap) {
@@ -60,7 +61,7 @@ function Schedule() {
 		var x = 0;
 		var y = 0;
 		MONTHNAMES.forEach(function(name) {
-			var month = months[name];
+			var month = instance.months[name];
 			drawer.draw(month, { 
 				x: x, 
 				y: y, 
@@ -72,10 +73,10 @@ function Schedule() {
 	}
 	this.find = function(x, y) {
 		for(var i = 0; i < MONTHNAMES.length; i++) {
-			var month = months[MONTHNAMES[i]];
+			var month = instance.months[MONTHNAMES[i]];
 			if (month.isIn(x,y))
 				return month;
-		};n
+		};
 	}
 	initMonths();
 }
@@ -85,15 +86,25 @@ function Month(name) {
 	var MARGIN = 10;
 	var lowerBound = MARGIN;
 	var middleX;
+	var queue = [];
 	var courses = {};
 	this.add = function(course) {
-		courses[course.json.id] = course;
-		var params = {
-			x: middleX,
-			y: lowerBound + course.COURSERADIUS,
+		var params;
+		if (queue.length === 0) {
+			params = {
+				x: middleX,
+				y: lowerBound + course.COURSERADIUS,
+			}
+			lowerBound += course.COURSERADIUS * 2 + MARGIN;
+		} else {
+			params = queue.shift();
 		}
-		lowerBound += course.COURSERADIUS * 2 + MARGIN;	
+		courses[course.json.id] = params;
 		return params;
+	}
+	this.remove = function(course) {
+		queue.push(courses[course.json.id]);
+		
 	}
 	this.draw = function(drawer, snap, colors, params) {
 		var x = params.x;
@@ -122,7 +133,8 @@ function Course(schedule, json) {
 	this.json = json;
 	var instance = this;
 	var snapElement;
-	
+	var month = schedule.months[json.month];
+	var drawer = drawer;
 	var drag = function() {
 		var localMatrix;
 		snapElement.drag(function(shiftX,shiftY) {
@@ -137,16 +149,23 @@ function Course(schedule, json) {
 		}, function() {
 			localMatrix = snapElement.transform().localMatrix;
 		}, function(event) {
-			console.log(schedule.find(event.x, event.y));
+			month.remove(instance);
+			snapElement.remove();
+			var newMonth = schedule.find(event.x, event.y);
+			drawer.draw(instance, newMonth.add(instance));
+			month = newMonth;
 		});
 	}
 
-	this.draw = function(drawer, snap, colors, params) {
+	this.draw = function(draw, snap, colors, params) {
 		var x = params.x;
 		var y = params.y;
-
+		drawer = draw;
 		snapElement = snap.circle(x, y, instance.COURSERADIUS);
-		snapElement.attr({fill: colors.get()});
+		snapElement.attr({
+			fill: colors.get(),
+			stroke: '#000',
+		});
 		drag();
 	}
 
