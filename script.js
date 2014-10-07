@@ -19,52 +19,87 @@ function Main() {
 		var svgId = '#main';
 		var schedule = new Schedule();
 		schedule.init(svgId);
+		var course = new Course(3);
+		schedule.add(course);
+		course = new Course(2);
+		schedule.add(course);
 	}
 }
 
 function Schedule() {
 	var $element;
 	var snap;
-	var months = ['oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may'];
+	var MONTHNAMES = ['oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may'];
+	var months = {};
 	var colors = new ColorFactory();
 	function drawMonths() {
 		var monthHeight = $element.height();
-		var monthWidth = $element.width()/months.length;
+		var monthWidth = $element.width()/MONTHNAMES.length;
 		var monthX = 0;
-		months.forEach(function(monthName) {
-			console.log(monthName);
-			var month = new Month();
-			month.init(snap);
-			month.draw(monthX, 0, monthWidth, monthHeight, colors.get(), monthName);
+		MONTHNAMES.forEach(function(monthName) {
+			var month = months[monthName]
+			month.draw(monthX, 0, monthWidth, monthHeight, 
+				colors.get(), monthName);
 			monthX += monthWidth;
 		});
+		console.log(months);
 	}
-
+	function initMonths() {
+		MONTHNAMES.forEach(function(monthName) {
+			months[monthName] = new Month(snap, colors);
+		});
+	}
 	this.init = function(svgId) {
 		$element = $(svgId);
 		snap = Snap(svgId);
+		initMonths();
 		drawMonths();
+	}
+	this.add = function(course) {
+		months[course.month].add(course);
 	}
 }
 
-function Month() {
-	var snap;
-	function setSnap(value) {
-		snap = value;
-	}
-
-	this.init = function(snap) {
-		setSnap(snap);
-	}
-
+function Month(snap, colors) {
+	var snapRect;
+	var margin = 10;
+	var lowerBound = margin;
+	var courseRadius = 50;
+	var middleX;
+	var courses = {};
 	this.draw = function(x, y, width, height, color, text) {
-		var rect = snap.rect(x, y, width, height);
-		rect.attr({fill: color});
+		middleX = x + width/2;
+		snapRect = snap.rect(x, y, width, height);
+		snapRect.attr({fill: color});
 		var text = snap.text(x + width/5, height/2, text.toUpperCase());
 		text.attr({
 			fontSize: 40,
 			fontFamily: 'Comic Sans MS',
 			fill: 'white' 
+		});
+	}
+	this.add = function(course) {
+		courses[course.id] = snap.circle(middleX, lowerBound + courseRadius, courseRadius);
+		lowerBound += courseRadius * 2 + margin;
+		var ix = courses[course.id].transform().localMatrix.e;
+		var iy = courses[course.id].transform().localMatrix.f;
+		courses[course.id].drag(function(x,y) {
+			var matrix = new Snap.Matrix();
+			console.log(matrix);
+			matrix.translate(ix + x,iy + y);
+			courses[course.id].attr({
+				transform: matrix.toTransformString()
+			});
+			console.log(matrix.toTransformString());
+
+		}, function() {}, function(event) {
+			console.log(event);
+			Snap.selectAll('rect').forEach(function(element) {
+				if (Snap.path.isPointInsideBBox(element.getBBox(), event.x, event.y))
+					console.log(element.node);
+			});
+			ix = courses[course.id].transform().localMatrix.e;
+			iy = courses[course.id].transform().localMatrix.f;
 		});
 	}
 }
@@ -85,4 +120,9 @@ function ColorFactory() {
 	}
 
 
+}
+
+function Course(id) {
+	this.id = id;
+	this.month = 'jan';
 }
