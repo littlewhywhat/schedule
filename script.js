@@ -70,6 +70,13 @@ function Schedule() {
 			x += width;
 		});
 	}
+	this.find = function(x, y) {
+		for(var i = 0; i < MONTHNAMES.length; i++) {
+			var month = months[MONTHNAMES[i]];
+			if (month.isIn(x,y))
+				return month;
+		};n
+	}
 	initMonths();
 }
 
@@ -104,6 +111,10 @@ function Month(name) {
 			fill: 'white' 
 		});
 	}
+
+	this.isIn = function(x,y) {
+		return Snap.path.isPointInsideBBox(snapElement.getBBox(), x, y);
+	}
 }
 
 function Course(schedule, json) {
@@ -126,7 +137,7 @@ function Course(schedule, json) {
 		}, function() {
 			localMatrix = snapElement.transform().localMatrix;
 		}, function(event) {
-			findRect(event.x, event.y);
+			console.log(schedule.find(event.x, event.y));
 		});
 	}
 
