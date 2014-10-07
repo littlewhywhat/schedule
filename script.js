@@ -141,13 +141,6 @@ function Course(schedule, json) {
 		});
 	}
 
-	var findRect = function(x,y) {
-		Snap.selectAll('rect').forEach(function(element) {
-				if (Snap.path.isPointInsideBBox(element.getBBox(), x, y))
-					console.log(element.node);
-			});
-	}
-
 	this.draw = function(drawer, snap, colors, params) {
 		var x = params.x;
 		var y = params.y;
