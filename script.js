@@ -20,19 +20,29 @@ function Main() {
 		var drawer = new Drawer(svgId);
 		var schedule = new Schedule();
 		drawer.draw(schedule);
-		getCourseJSONs().forEach(function(json) {
-			var course = new Course(schedule, json);
-			var params = schedule.add(course);
-			drawer.draw(course, params);
+		getCourseJSONs(function(jsons) {
+			console.log(jsons);
+			jsons.forEach(function(json) {
+				var course = new Course(schedule, json);
+				var params = schedule.add(course);
+				drawer.draw(course, params);
+			});
+			$('#panel').click(function() {
+				save(jsons);
+			});
+		});
+	}
+	function save(jsons) {
+		$('#panel').html(JSON.stringify(jsons));
+	}
+
+	function getCourseJSONs(callback) {
+		$.getJSON( 'courses.json', function(data) {
+			callback(data);
 		});
 	}
 
-	function getCourseJSONs() {
-		return [new CourseJSON(3), 
-				new CourseJSON(2)];
-	}
 }
-
 function Drawer(svgId) {
 	var snap = Snap(svgId);
 	var colors = new ColorFactory();
@@ -43,15 +53,15 @@ function Drawer(svgId) {
 
 function Schedule() {
 	var MONTHNAMES = ['oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may'];
-	var instance = this;
 	this.months = {};
+	var months = this.months;
 	function initMonths() {
 		MONTHNAMES.forEach(function(name) {
-			instance.months[name] = new Month(name);
+			months[name] = new Month(name);
 		});
 	}
 	this.add = function(course) {
-		return instance.months[course.json.month].add(course);
+		return months[course.json.month].add(course);
 	}
 
 	this.draw = function(drawer, snap) {
@@ -61,7 +71,7 @@ function Schedule() {
 		var x = 0;
 		var y = 0;
 		MONTHNAMES.forEach(function(name) {
-			var month = instance.months[name];
+			var month = months[name];
 			drawer.draw(month, { 
 				x: x, 
 				y: y, 
@@ -73,7 +83,7 @@ function Schedule() {
 	}
 	this.find = function(x, y) {
 		for(var i = 0; i < MONTHNAMES.length; i++) {
-			var month = instance.months[MONTHNAMES[i]];
+			var month = months[MONTHNAMES[i]];
 			if (month.isIn(x,y))
 				return month;
 		};
@@ -88,6 +98,7 @@ function Month(name) {
 	var middleX;
 	var queue = [];
 	var courses = {};
+	this.name = name;
 	this.add = function(course) {
 		var params;
 		if (queue.length === 0) {
@@ -154,6 +165,7 @@ function Course(schedule, json) {
 			var newMonth = schedule.find(event.x, event.y);
 			drawer.draw(instance, newMonth.add(instance));
 			month = newMonth;
+			json.month = month.name;
 		});
 	}
 
