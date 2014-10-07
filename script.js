@@ -17,58 +17,86 @@ $(document).ready(new Main().main);
 function Main() {
 	this.main = function() {
 		var svgId = '#main';
+		var drawer = new Drawer(svgId);
 		var schedule = new Schedule();
-		schedule.init(svgId);
-		var json = new CourseJSON(3);
-		schedule.add(json);
-		json = new CourseJSON(2);
-		schedule.add(json);
+		drawer.draw(schedule);
+		getCourseJSONs().forEach(function(json) {
+			var course = new Course(schedule, json);
+			var params = schedule.add(course);
+			drawer.draw(course, params);
+		});
+	}
+
+	function getCourseJSONs() {
+		return [new CourseJSON(3), 
+				new CourseJSON(2)];
+	}
+}
+
+function Drawer(svgId) {
+	var snap = Snap(svgId);
+	var colors = new ColorFactory();
+	this.draw = function(element, params) {
+		element.draw(this, snap, colors, params);
 	}
 }
 
 function Schedule() {
-	var $element;
-	var snap;
 	var MONTHNAMES = ['oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may'];
 	var months = {};
-	var colors = new ColorFactory();
-	function drawMonths() {
+	function initMonths() {
+		MONTHNAMES.forEach(function(name) {
+			months[name] = new Month(name);
+		});
+	}
+	this.add = function(course) {
+		return months[course.json.month].add(course);
+	}
+
+	this.draw = function(drawer, snap) {
+		var $element = $(snap.node);
 		var height = $element.height();
 		var width = $element.width()/MONTHNAMES.length;
 		var x = 0;
 		var y = 0;
 		MONTHNAMES.forEach(function(name) {
-			var month = months[name]
-			month.draw(x, y, width, height);
+			var month = months[name];
+			drawer.draw(month, { 
+				x: x, 
+				y: y, 
+				width: width, 
+				height: height
+			});
 			x += width;
 		});
 	}
-	function initMonths() {
-		MONTHNAMES.forEach(function(name) {
-			months[name] = new Month(snap, colors, name);
-		});
-	}
-	this.init = function(svgId) {
-		$element = $(svgId);
-		snap = Snap(svgId);
-		initMonths();
-		drawMonths();
-	}
-	this.add = function(courseJSON) {
-		months[courseJSON.month].add(new Course(snap, colors, courseJSON));
-	}
+	initMonths();
 }
 
-function Month(snap, colors, name) {
-	var snapRect;
+function Month(name) {
+	var snapElement;
 	var MARGIN = 10;
 	var lowerBound = MARGIN;
 	var middleX;
 	var courses = {};
-	this.draw = function(x, y, width, height) {
+	this.add = function(course) {
+		courses[course.json.id] = course;
+		var params = {
+			x: middleX,
+			y: lowerBound + course.COURSERADIUS,
+		}
+		lowerBound += course.COURSERADIUS * 2 + MARGIN;	
+		return params;
+	}
+	this.draw = function(drawer, snap, colors, params) {
+		var x = params.x;
+		var y = params.y;
+		var width = params.width;
+		var height = params.height;
+		
 		middleX = x + width/2;
-		snapRect = snap.rect(x, y, width, height);
-		snapRect.attr({fill: colors.get()});
+		snapElement = snap.rect(x, y, width, height);
+		snapElement.attr({fill: colors.get()});
 		var text = snap.text(x + width/5, height/2, name.toUpperCase());
 		text.attr({
 			fontSize: 40,
@@ -76,18 +104,14 @@ function Month(snap, colors, name) {
 			fill: 'white' 
 		});
 	}
-	this.add = function(course) {
-		course.draw(middleX, lowerBound + course.COURSERADIUS);
-		courses[course.json.id] = course;
-		lowerBound += course.COURSERADIUS * 2 + MARGIN;	
-	}
 }
 
-function Course(snap, colors, json) {
+function Course(schedule, json) {
 	this.COURSERADIUS = 50;
 	this.json = json;
 	var instance = this;
 	var snapElement;
+	
 	var drag = function() {
 		var localMatrix;
 		snapElement.drag(function(shiftX,shiftY) {
@@ -113,7 +137,10 @@ function Course(snap, colors, json) {
 			});
 	}
 
-	this.draw = function(x, y) {
+	this.draw = function(drawer, snap, colors, params) {
+		var x = params.x;
+		var y = params.y;
+
 		snapElement = snap.circle(x, y, instance.COURSERADIUS);
 		snapElement.attr({fill: colors.get()});
 		drag();
