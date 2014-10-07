@@ -1,18 +1,22 @@
 [
 	{
 		"id":3,
-		"month":"feb"
+		"month":"nov2",
+		"color":"#f6b26b"
 	},
 	{
 		"id":2,
-		"month":"jan"
+		"month":"jan1",
+		"color":"#ffd966"
 	},
 	{
 		"id":0,
-		"month":"may"
+		"month":"nov1",
+		"color":"#a4c2f4"
 	},
 	{
 		"id":1,
-		"month":"apr"
+		"month":"oct1",
+		"color":"#f4cccc"
 	}
 ]

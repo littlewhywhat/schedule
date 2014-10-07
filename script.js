@@ -21,7 +21,6 @@ function Main() {
 		var schedule = new Schedule();
 		drawer.draw(schedule);
 		getCourseJSONs(function(jsons) {
-			console.log(jsons);
 			jsons.forEach(function(json) {
 				var course = new Course(schedule, json);
 				var params = schedule.add(course);
@@ -52,7 +51,10 @@ function Drawer(svgId) {
 }
 
 function Schedule() {
-	var MONTHNAMES = ['oct','nov','dec','jan', 'feb', 'mar', 'apr', 'may'];
+	var MONTHNAMES = ['oct1','oct2','oct3','oct4',
+					  'nov1','nov2','nov3','nov4',
+					  'dec1','dec2','dec3','dec4',
+					  'jan1','jan2','jan3','jan4'];
 	this.months = {};
 	var months = this.months;
 	function initMonths() {
@@ -125,8 +127,11 @@ function Month(name) {
 		
 		middleX = x + width/2;
 		snapElement = snap.rect(x, y, width, height);
-		snapElement.attr({fill: colors.get()});
-		var text = snap.text(x + width/5, height/2, name.toUpperCase());
+		snapElement.attr({
+			fill: colors.get(),
+			stroke: 'black'
+		});
+		var text = snap.text(x + width/10, height/2, name.toUpperCase());
 		text.attr({
 			fontSize: 40,
 			fontFamily: 'Comic Sans MS',
@@ -175,7 +180,7 @@ function Course(schedule, json) {
 		drawer = draw;
 		snapElement = snap.circle(x, y, instance.COURSERADIUS);
 		snapElement.attr({
-			fill: colors.get(),
+			fill: json.color,
 			stroke: '#000',
 		});
 		drag();
@@ -186,11 +191,16 @@ function Course(schedule, json) {
 function ColorFactory() {
 	var colors = ['#f6b26b','#ffd966','#d9d9d9', 
 	'#6fa8dc', '#a4c2f4', '#f4cccc', '#b6d7a8', '#6aa84f']
-	var index = -1;
+	var index2 = -1;
+	var index = 0;
 	function nextIndex() {
-		index += 1;
-		if (index === colors.length)
-			index = 0;
+		index2++;
+		if (index2 === 4) { 
+			index += 1;
+			if (index === colors.length + 1)
+				index = 0;
+			index2 = 0;
+		}
 	}
 
 	this.get = function() {
