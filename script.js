@@ -19,10 +19,10 @@ function Main() {
 		var svgId = '#main';
 		var schedule = new Schedule();
 		schedule.init(svgId);
-		var course = new Course(3);
-		schedule.add(course);
-		course = new Course(2);
-		schedule.add(course);
+		var json = new CourseJSON(3);
+		schedule.add(json);
+		json = new CourseJSON(2);
+		schedule.add(json);
 	}
 }
 
@@ -33,20 +33,19 @@ function Schedule() {
 	var months = {};
 	var colors = new ColorFactory();
 	function drawMonths() {
-		var monthHeight = $element.height();
-		var monthWidth = $element.width()/MONTHNAMES.length;
-		var monthX = 0;
-		MONTHNAMES.forEach(function(monthName) {
-			var month = months[monthName]
-			month.draw(monthX, 0, monthWidth, monthHeight, 
-				colors.get(), monthName);
-			monthX += monthWidth;
+		var height = $element.height();
+		var width = $element.width()/MONTHNAMES.length;
+		var x = 0;
+		var y = 0;
+		MONTHNAMES.forEach(function(name) {
+			var month = months[name]
+			month.draw(x, y, width, height);
+			x += width;
 		});
-		console.log(months);
 	}
 	function initMonths() {
-		MONTHNAMES.forEach(function(monthName) {
-			months[monthName] = new Month(snap, colors);
+		MONTHNAMES.forEach(function(name) {
+			months[name] = new Month(snap, colors, name);
 		});
 	}
 	this.init = function(svgId) {
@@ -55,23 +54,22 @@ function Schedule() {
 		initMonths();
 		drawMonths();
 	}
-	this.add = function(course) {
-		months[course.month].add(course);
+	this.add = function(courseJSON) {
+		months[courseJSON.month].add(new Course(snap, colors, courseJSON));
 	}
 }
 
-function Month(snap, colors) {
+function Month(snap, colors, name) {
 	var snapRect;
-	var margin = 10;
-	var lowerBound = margin;
-	var courseRadius = 50;
+	var MARGIN = 10;
+	var lowerBound = MARGIN;
 	var middleX;
 	var courses = {};
-	this.draw = function(x, y, width, height, color, text) {
+	this.draw = function(x, y, width, height) {
 		middleX = x + width/2;
 		snapRect = snap.rect(x, y, width, height);
-		snapRect.attr({fill: color});
-		var text = snap.text(x + width/5, height/2, text.toUpperCase());
+		snapRect.attr({fill: colors.get()});
+		var text = snap.text(x + width/5, height/2, name.toUpperCase());
 		text.attr({
 			fontSize: 40,
 			fontFamily: 'Comic Sans MS',
@@ -79,29 +77,48 @@ function Month(snap, colors) {
 		});
 	}
 	this.add = function(course) {
-		courses[course.id] = snap.circle(middleX, lowerBound + courseRadius, courseRadius);
-		lowerBound += courseRadius * 2 + margin;
-		var ix = courses[course.id].transform().localMatrix.e;
-		var iy = courses[course.id].transform().localMatrix.f;
-		courses[course.id].drag(function(x,y) {
-			var matrix = new Snap.Matrix();
-			console.log(matrix);
-			matrix.translate(ix + x,iy + y);
-			courses[course.id].attr({
+		course.draw(middleX, lowerBound + course.COURSERADIUS);
+		courses[course.json.id] = course;
+		lowerBound += course.COURSERADIUS * 2 + MARGIN;	
+	}
+}
+
+function Course(snap, colors, json) {
+	this.COURSERADIUS = 50;
+	this.json = json;
+	var instance = this;
+	var snapElement;
+	var drag = function() {
+		var localMatrix;
+		snapElement.drag(function(shiftX,shiftY) {
+			var matrix = new Snap.matrix();
+			matrix.translate(
+				localMatrix.e + shiftX, 
+				localMatrix.f + shiftY
+			);
+			snapElement.attr({
 				transform: matrix.toTransformString()
 			});
-			console.log(matrix.toTransformString());
-
-		}, function() {}, function(event) {
-			console.log(event);
-			Snap.selectAll('rect').forEach(function(element) {
-				if (Snap.path.isPointInsideBBox(element.getBBox(), event.x, event.y))
-					console.log(element.node);
-			});
-			ix = courses[course.id].transform().localMatrix.e;
-			iy = courses[course.id].transform().localMatrix.f;
+		}, function() {
+			localMatrix = snapElement.transform().localMatrix;
+		}, function(event) {
+			findRect(event.x, event.y);
 		});
 	}
+
+	var findRect = function(x,y) {
+		Snap.selectAll('rect').forEach(function(element) {
+				if (Snap.path.isPointInsideBBox(element.getBBox(), x, y))
+					console.log(element.node);
+			});
+	}
+
+	this.draw = function(x, y) {
+		snapElement = snap.circle(x, y, instance.COURSERADIUS);
+		snapElement.attr({fill: colors.get()});
+		drag();
+	}
+
 }
 
 function ColorFactory() {
@@ -118,11 +135,9 @@ function ColorFactory() {
 		nextIndex();
 		return colors[index];
 	}
-
-
 }
 
-function Course(id) {
+function CourseJSON(id) {
 	this.id = id;
 	this.month = 'jan';
 }
